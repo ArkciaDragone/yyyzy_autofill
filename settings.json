@@ -1,0 +1,60 @@
+{
+    "headers": {
+        "Accept-Language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9"
+    },
+    "yqfk_version": "Mon, 17 Aug 2020 05:27:52 GMT",
+    "login_data": {
+        "appid": "portal2017",
+        "userName": "",
+        "password": "",
+        "randCode": "",
+        "smsCode": "",
+        "otpCode": "",
+        "redirUrl": "https://portal.pku.edu.cn/portal2017/ssoLogin.do"
+    },
+    "upload_data": {
+        "xh": "required",
+        "sfhx": "n",
+        "hxsj": "",
+        "cfdssm": "",
+        "cfddjsm": "",
+        "cfdxjsm": "",
+        "dqszdxxdz": "required",
+        "dqszdsm": "required",
+        "dqszddjsm": "required",
+        "dqszdxjsm": "required",
+        "dqszdgbm": "",
+        "sflsss": "",
+        "jrtw": "required",
+        "sfczzz": "required",
+        "jqxdgj": "",
+        "qtqksm": "",
+        "tbrq": "",
+        "yqzd": "required",
+        "sfcx": "",
+        "dwdzxx": "required",
+        "dwjd": "required",
+        "dwwd": "required",
+        "sfdrfj": "",
+        "chdfj": "",
+        "jkm": "\u7eff\u7801",
+        "simstoken": "",
+        "sfmjqzbl": "required",
+        "sfmjmjz": "required",
+        "hsjcjg": "",
+        "jjgcsj": "",
+        "sfzgfxdq": "required"
+    },
+    "urls": {
+        "login_portal": "https://portal.pku.edu.cn/portal2017/login.jsp",
+        "login_oauth": "https://iaaa.pku.edu.cn/iaaa/oauth.jsp?appID=portal2017&appName=\u5317\u4eac\u5927\u5b66\u6821\u5185\u4fe1\u606f\u95e8\u6237\u65b0\u7248&redirectUrl=https://portal.pku.edu.cn/portal2017/ssoLogin.do",
+        "login_post": "https://iaaa.pku.edu.cn/iaaa/oauthlogin.do",
+        "login_do": "https://portal.pku.edu.cn/portal2017/ssoLogin.do",
+        "app_entry": "https://portal.pku.edu.cn/portal2017/util/appSysRedir.do?appId=epidemic",
+        "ssop": "https://ssop.pku.edu.cn",
+        "app_info": "https://ssop.pku.edu.cn/stuAffair/edu/pku/stu/sa/jpf/yqfk/stu/getTbxx.do",
+        "app_post": "https://ssop.pku.edu.cn/stuAffair/edu/pku/stu/sa/jpf/yqfk/stu/saveMrtb.do"
+    }
+}
