@@ -9,21 +9,21 @@ SETTINGS = None
 URLs = None
 
 
-def load_settings(filename='settings.json'):
+def load_settings(settings_file='settings.json', private_file='private.json'):
     global SETTINGS, URLs
-    with open(filename, encoding='utf-8') as f:
+    with open(settings_file, encoding='utf-8') as f:
         SETTINGS = json.load(f)
         URLs = SETTINGS['urls']
-    changed = False
-    if not SETTINGS['login_data']['userName']:
-        SETTINGS['login_data']['userName'] = input('学号: ')
-        changed = True
-    if not SETTINGS['login_data']['password']:
-        SETTINGS['login_data']['password'] = input('密码: ')
-        changed = True
-    if changed:
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(SETTINGS, f, indent=4)
+    try:
+        with open(private_file, encoding='utf-8') as f:
+            private = json.load(f)
+    except FileNotFoundError:
+        private = {'userName': input('学号: '),
+                'password': input('密码: ')}
+        with open(private_file, 'w', encoding='utf-8') as f:
+            json.dump(private, f, indent=4)
+    SETTINGS['login_data']['userName'] = private['userName']
+    SETTINGS['login_data']['password'] = private['password']
 
 
 def get_session():
@@ -41,7 +41,7 @@ def login(s):
     s.head(URLs['login_portal'])
     s.head(URLs['login_oauth'])
     json = s.post(URLs['login_post'], SETTINGS['login_data']).json()
-    assert json['success'], 'login failed'
+    assert json['success'], 'login failed, please check private.json'
     s.head(f'{URLs["login_do"]}?_rand={random()}&token={json["token"]}')
 
 
@@ -86,8 +86,8 @@ def upload(session):
               'Please fill and save the form manually for once and/or modify settings.')
     else:
         print('The following data will be uploaded:')
-        ins = input('Confirm? [y]|n:').strip().lower()[0]
-        if ins == '' or ins == 'y':
+        ins = input('Confirm? [y]|n:').strip().lower()
+        if ins == '' or ins[0] == 'y':
             json = session.post(URLs['app_post']).json()
             assert json['success'], 'upload failure: ' + \
                 json.get('msg', 'no msg')
