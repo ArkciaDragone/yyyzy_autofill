@@ -53,6 +53,7 @@
         "login_post": "https://iaaa.pku.edu.cn/iaaa/oauthlogin.do",
         "login_do": "https://portal.pku.edu.cn/portal2017/ssoLogin.do",
         "app_entry": "https://portal.pku.edu.cn/portal2017/util/appSysRedir.do?appId=epidemic",
+        "app_logout": "https://ssop.pku.edu.cn/stuAffair/logout.do",
         "ssop": "https://ssop.pku.edu.cn",
         "app_info": "https://ssop.pku.edu.cn/stuAffair/edu/pku/stu/sa/jpf/yqfk/stu/getTbxx.do",
         "app_post": "https://ssop.pku.edu.cn/stuAffair/edu/pku/stu/sa/jpf/yqfk/stu/saveMrtb.do"

@@ -48,6 +48,7 @@ def login(s):
 def update_check(session):
     """Check whether data format has changed"""
     resp = session.get(URLs['app_entry'])
+    session.get(URLs['app_logout'])
     soup = BeautifulSoup(resp.content, 'lxml')
     for script in soup.find_all('script'):
         if 'Yqfk.js' in script.get('src', ''):
@@ -75,6 +76,11 @@ def get_today_upload_data(session):
         if json['zrtbxx'].get(k):
             data[k] = json['zrtbxx'][k]
     data['tbrq'] = date.today().strftime('%Y%m%d')  # important
+    if json['mrtbxx']:
+        print("Today's report had been submitted earlier.")
+        exit(0)
+    else:
+        data['dqszdgbm'] = '' if json['zrtbxx']['dqszdgbm'] == '156' else json['zrtbxx']['dqszdgbm']
     return data
 
 
@@ -88,8 +94,8 @@ def upload(session):
         print('The following data will be uploaded:')
         ins = input('Confirm? [y]|n:').strip().lower()
         if ins == '' or ins[0] == 'y':
-            json = session.post(URLs['app_post']).json()
-            assert json['success'], 'upload failure: ' + \
+            json = session.post(URLs['app_post'], data).json()
+            assert json['success'], 'SUBMISSION FAILURE: ' + \
                 json.get('msg', 'no msg')
         else:
             print('Aborted.')
