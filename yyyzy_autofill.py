@@ -79,6 +79,9 @@ def get_today_upload_data(session):
     if json['mrtbxx']:
         print("Today's report had been submitted earlier.")
         exit(0)
+    elif json['tbcs'] == 'y':
+        print("Please complete the report before 13:00 next time.")
+        exit(0)
     else:
         data['dqszdgbm'] = '' if json['zrtbxx']['dqszdgbm'] == '156' else json['zrtbxx']['dqszdgbm']
     return data
