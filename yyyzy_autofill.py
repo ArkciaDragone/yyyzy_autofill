@@ -1,5 +1,7 @@
 import requests
 import json
+import argparse
+from getpass import getpass
 from bs4 import BeautifulSoup
 from random import random
 from datetime import date
@@ -9,7 +11,25 @@ SETTINGS = None
 URLs = None
 
 
-def load_settings(settings_file='settings.json', private_file='private.json'):
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        description='Upload yyyzy data for today.')
+    parser.add_argument('-y', '--confirm', action='store_true',
+                        help='skip user confirmation; useful for automated task')
+    parser.add_argument('-s', '--settings-file', default='settings.json', metavar='FILENAME',
+                        help='file to load settings from')
+    parser.add_argument('-p', '--private-file', default='private.json', metavar='FILENAME',
+                        help='file to save ID and password')
+    parser.add_argument('-F', '--force', action='store_true',
+                        help='upload even if already uploaded or overdue')
+    parser.add_argument('--no-check', action='store_true',
+                        help="don't perform js script check")
+    parser.add_argument('--no-save', action='store_true',
+                        help="don't save ID and password")
+    return parser.parse_args()
+
+
+def load_settings(settings_file='settings.json', private_file='private.json', no_save=False):
     global SETTINGS, URLs
     with open(settings_file, encoding='utf-8') as f:
         SETTINGS = json.load(f)
@@ -19,9 +39,10 @@ def load_settings(settings_file='settings.json', private_file='private.json'):
             private = json.load(f)
     except FileNotFoundError:
         private = {'userName': input('学号: '),
-                'password': input('密码: ')}
-        with open(private_file, 'w', encoding='utf-8') as f:
-            json.dump(private, f, indent=4)
+                   'password': getpass('密码: ')}
+        if not no_save:
+            with open(private_file, 'w', encoding='utf-8') as f:
+                json.dump(private, f, indent=4)
     SETTINGS['login_data']['userName'] = private['userName']
     SETTINGS['login_data']['password'] = private['password']
 
@@ -69,46 +90,55 @@ def update_check(session):
         'ATTENTION REQUIRED: reqData format changed'
 
 
-def get_today_upload_data(session):
+def get_today_upload_data(session, force=False):
+    resp = session.get(URLs['app_entry'])
+    session.get(URLs['app_logout'])
     data = SETTINGS['upload_data']
     json = session.get(URLs['app_info']).json()
     for k in data.keys():
         if json['zrtbxx'].get(k):
             data[k] = json['zrtbxx'][k]
     data['tbrq'] = date.today().strftime('%Y%m%d')  # important
-    if json.get('mrtbxx'):
-        print("Today's report had been submitted earlier.")
+    if not force and json.get('mrtbxx'):
+        print("Today's report has been submitted earlier.")
         exit(0)
-    elif json.get('tbcs') == 'y':
+    elif not force and json.get('tbcs') == 'y':
         print("Please complete the report before 13:00 next time.")
-        exit(0)
+        exit(-1)
     else:
         country = json['zrtbxx'].get('dqszdgbm')
         data['dqszdgbm'] = '' if country == '156' else country
     return data
 
 
-def upload(session):
-    data = get_today_upload_data(session)
-    pprint(data)
+def upload(session, skip_confirm=False, force=False):
+    data = get_today_upload_data(session, force)
     if 'required' in data.values():
+        pprint(data)
         print('Some of the "required" items are not filled. ' +
               'Please fill and save the form manually for once and/or modify settings.')
     else:
-        print('The following data will be uploaded:')
-        ins = input('Confirm? [y]|n:').strip().lower()
-        if ins == '' or ins[0] == 'y':
+        if not skip_confirm:
+            print('The following data will be uploaded:')
+            pprint(data)
+            ins = input('Confirm? [y]|n:').strip().lower()
+        if skip_confirm or ins == '' or ins[0] == 'y':
             json = session.post(URLs['app_post'], data).json()
             assert json['success'], 'SUBMISSION FAILURE: ' + \
                 json.get('msg', 'no msg')
+            print('Successfully uploaded.')
         else:
             print('Aborted.')
 
 
 if __name__ == "__main__":
-    load_settings()
+    args = parse_arguments()
+    load_settings(args.settings_file, args.private_file, args.no_save)
     session = get_session()
     print('Loading...')
     login(session)
-    update_check(session)
-    upload(session)
+    if not args.no_check:
+        update_check(session)
+    upload(session, args.confirm, args.force)
+    if not args.confirm:
+        input('Press ENTER to exit...')

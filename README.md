@@ -1,10 +1,12 @@
 # YYYZY_Autofill
 
-This software basically repeats yesterday's submission. Currently only designed for "not on campus" situation. Code understanding is highly recommended.
+This software basically repeats yesterday's submission. Currently only tested for "not on campus" situation.
 
 How to use:
  - `pip install -r requirements.txt`
  - Run the file
+
+To see all the options available, run the file with `-h`.
 
 Student ID and password are stored locally in `private.json`. Please keep it safe.
 
