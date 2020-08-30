@@ -135,7 +135,8 @@ if __name__ == "__main__":
     args = parse_arguments()
     load_settings(args.settings_file, args.private_file, args.no_save)
     session = get_session()
-    print('Loading...')
+    if not args.confirm:
+        print('Loading...')
     login(session)
     if not args.no_check:
         update_check(session)
