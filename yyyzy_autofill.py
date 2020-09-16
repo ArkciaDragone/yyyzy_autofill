@@ -1,10 +1,10 @@
 import requests
 import json
 import argparse
+from copy import copy
 from getpass import getpass
 from bs4 import BeautifulSoup
 from random import random
-from datetime import date
 from pprint import pprint
 
 SETTINGS = None
@@ -38,11 +38,13 @@ def load_settings(settings_file='settings.json', private_file='private.json', no
         with open(private_file, encoding='utf-8') as f:
             private = json.load(f)
     except FileNotFoundError:
-        private = {'userName': input('学号: '),
-                   'password': getpass('密码: ')}
+        private = {'userName': input('Student ID: '),
+                   'password': getpass('Password: ')}
         if not no_save:
             with open(private_file, 'w', encoding='utf-8') as f:
                 json.dump(private, f, indent=4)
+            print('ID and password saved to', private_file)
+            print('Please keep them safe.')
     SETTINGS['login_data']['userName'] = private['userName']
     SETTINGS['login_data']['password'] = private['password']
 
@@ -93,30 +95,39 @@ def update_check(session):
 def get_today_upload_data(session, force=False):
     resp = session.get(URLs['app_entry'])
     session.get(URLs['app_logout'])
-    data = SETTINGS['upload_data']
-    json = session.get(URLs['app_info']).json()
-    for k in data.keys():
-        if json['zrtbxx'].get(k):
-            data[k] = json['zrtbxx'][k]
-    data['tbrq'] = date.today().strftime('%Y%m%d')  # important
-    if not force and json.get('mrtbxx'):
-        print("Today's report has been submitted earlier.")
-        exit(0)
-    elif not force and json.get('tbcs') == 'y':
-        print("Please complete the report before 13:00 next time.")
-        exit(-1)
-    else:
-        country = json['zrtbxx'].get('dqszdgbm')
-        data['dqszdgbm'] = '' if country == '156' else country
+    info = session.get(URLs['app_info']).json()
+    if not force:
+        if info.get('mrtbxx'):
+            print("Today's report has already been submitted.")
+            exit(0)
+        elif info.get('tbcs') == 'y':
+            print("Overdue. Please complete the report before 13:00 tomorrow.")
+            exit(-1)
+
+    data = copy(SETTINGS['upload_data'])
+    onoff, nonoff = ('on', 'off') if info['jcxx']['sfhx'] == 'y' else ('off', 'on')
+    data['tbrq'] = info['tbrq']
+    yd = info['zrtbxx']
+    country = yd.get('dqszdgbm')
+    data['dqszdgbm'] = '' if country == '156' else country
+    if onoff == 'on':
+        for k in ('cfdssm', 'cfddjsm', 'cfdxjsm', 'hxsj', 'sfhx'):
+            data[k] = info['jcxx'][k]
+        data['sfcx'] = 'n'
+    for k, v in data.items():
+        if v == 'req' or v == onoff:
+            data[k] = yd[k]
+        elif v == nonoff:
+            data[k] = ''
     return data
 
 
 def upload(session, skip_confirm=False, force=False):
     data = get_today_upload_data(session, force)
-    if 'required' in data.values():
+    if 'req' in data.values() or 'on' in data.values() or 'off' in data.values():
         pprint(data)
-        print('Some of the "required" items are not filled. ' +
-              'Please fill and save the form manually for once and/or modify settings.')
+        print('Some of the entries are not correctly filled. ' +
+              'Please fill and save the form manually today and retry tomorrow.')
     else:
         if not skip_confirm:
             print('The following data will be uploaded:')
