@@ -6,6 +6,7 @@ from getpass import getpass
 from bs4 import BeautifulSoup
 from random import random
 from pprint import pprint
+from base64 import b64decode, b64encode
 
 SETTINGS = None
 URLs = None
@@ -21,10 +22,10 @@ def parse_arguments():
     parser.add_argument('-p', '--private-file', default='private.json', metavar='FILENAME',
                         help='file to save ID and password')
     parser.add_argument('-F', '--force', action='store_true',
-                        help='upload even if already uploaded or overdue')
+                        help='try to upload even if already uploaded or overdue')
     parser.add_argument('--no-check', action='store_true',
                         help="don't perform js script check")
-    parser.add_argument('--no-save', action='store_true',
+    parser.add_argument('-S', '--no-save', action='store_true',
                         help="don't save ID and password")
     return parser.parse_args()
 
@@ -38,15 +39,17 @@ def load_settings(settings_file='settings.json', private_file='private.json', no
         with open(private_file, encoding='utf-8') as f:
             private = json.load(f)
     except FileNotFoundError:
-        private = {'userName': input('Student ID: '),
-                   'password': getpass('Password: ')}
+        private = {'userName': b64encode(input('Student ID: ').encode()).decode(),
+                   'password': b64encode(getpass('Password: ').encode()).decode()}
         if not no_save:
             with open(private_file, 'w', encoding='utf-8') as f:
                 json.dump(private, f, indent=4)
             print('ID and password saved to', private_file)
             print('Please keep them safe.')
-    SETTINGS['login_data']['userName'] = private['userName']
-    SETTINGS['login_data']['password'] = private['password']
+    SETTINGS['login_data']['userName'] = b64decode(
+        private['userName'].encode()).decode()
+    SETTINGS['login_data']['password'] = b64decode(
+        private['password'].encode()).decode()
 
 
 def get_session():
@@ -93,7 +96,7 @@ def update_check(session):
 
 
 def get_today_upload_data(session, force=False):
-    resp = session.get(URLs['app_entry'])
+    session.get(URLs['app_entry'])
     session.get(URLs['app_logout'])
     info = session.get(URLs['app_info']).json()
     if not force:
@@ -105,15 +108,16 @@ def get_today_upload_data(session, force=False):
             exit(-1)
 
     data = copy(SETTINGS['upload_data'])
-    onoff, nonoff = ('on', 'off') if info['jcxx']['sfhx'] == 'y' else ('off', 'on')
+    onoff, nonoff = (
+        'on', 'off') if info['jcxx']['sfhx'] == 'y' else ('off', 'on')
+    print(onoff)
     data['tbrq'] = info['tbrq']
     yd = info['zrtbxx']
     country = yd.get('dqszdgbm')
     data['dqszdgbm'] = '' if country == '156' else country
-    if onoff == 'on':
-        for k in ('cfdssm', 'cfddjsm', 'cfdxjsm', 'hxsj', 'sfhx'):
-            data[k] = info['jcxx'][k]
-        data['sfcx'] = 'n'
+    for k in ('cfdssm', 'cfddjsm', 'cfdxjsm', 'hxsj', 'sfhx'):
+        data[k] = info['jcxx'][k]
+    data['sfcx'] = 'n' if onoff == 'on' else ''
     for k, v in data.items():
         if v == 'req' or v == onoff:
             data[k] = yd[k]
