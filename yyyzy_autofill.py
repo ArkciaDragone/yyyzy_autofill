@@ -45,7 +45,7 @@ def load_settings(settings_file='settings.json', private_file='private.json', no
             with open(private_file, 'w', encoding='utf-8') as f:
                 json.dump(private, f, indent=4)
             print('ID and password saved to', private_file)
-            print('Please keep them safe.')
+            print('Please keep it safe.')
     SETTINGS['login_data']['userName'] = b64decode(
         private['userName'].encode()).decode()
     SETTINGS['login_data']['password'] = b64decode(
@@ -63,11 +63,16 @@ def __save_as_html(resp):
         f.write(resp.content)
 
 
-def login(s):
+def login(s, args):
     s.head(URLs['login_portal'])
     s.head(URLs['login_oauth'])
     json = s.post(URLs['login_post'], SETTINGS['login_data']).json()
-    assert json['success'], 'login failed, please check private.json'
+    if not json['success']:
+        print('Failed to login!')
+        print(f"({json['errors']['code']}) {json['errors']['msg']}")
+        if not args.no_save and json['errors']['code'] == 'E01':
+            print('Delete ' + args.private_file + ' to retry.')
+        exit(-1)
     s.head(f'{URLs["login_do"]}?_rand={random()}&token={json["token"]}')
 
 
@@ -104,17 +109,18 @@ def get_today_upload_data(session, force=False):
             print("Today's report has already been submitted.")
             exit(0)
         elif info.get('tbcs') == 'y':
-            print("Overdue. Please complete the report before 13:00 tomorrow.")
+            print("Failed to submit: Overdue.")
+            print(f"Please complete before {info['glsz']['tbjzsd']} tomorrow.")
             exit(-1)
 
     data = copy(SETTINGS['upload_data'])
     onoff, nonoff = (
         'on', 'off') if info['jcxx']['sfhx'] == 'y' else ('off', 'on')
-    print(onoff)
     data['tbrq'] = info['tbrq']
     yd = info['zrtbxx']
     country = yd.get('dqszdgbm')
     data['dqszdgbm'] = '' if country == '156' else country
+    data['sfdrfj'] = 'n' if onoff == 'off' and yd['dqszdsm'] == '11' else ''
     for k in ('cfdssm', 'cfddjsm', 'cfdxjsm', 'hxsj', 'sfhx'):
         data[k] = info['jcxx'][k]
     data['sfcx'] = 'n' if onoff == 'on' else ''
@@ -152,7 +158,7 @@ if __name__ == "__main__":
     session = get_session()
     if not args.confirm:
         print('Loading...')
-    login(session)
+    login(session, args)
     if not args.no_check:
         update_check(session)
     upload(session, args.confirm, args.force)
