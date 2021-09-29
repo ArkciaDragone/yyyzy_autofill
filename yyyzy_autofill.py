@@ -117,7 +117,12 @@ def get_today_upload_data(session, force=False):
     onoff, nonoff = (
         'on', 'off') if info['jcxx']['sfhx'] == 'y' else ('off', 'on')
     data['tbrq'] = info['tbrq']
-    yd = info['zrtbxx']
+    try:
+        yd = info['zrtbxx']
+    except KeyError:
+        print('No submitted data found for yesterday.\n'
+              'Please fill and save the form manually today and retry tomorrow.')
+        exit(-1)
     country = yd.get('dqszdgbm')
     data['dqszdgbm'] = '' if country == '156' else country
     data['sfdrfj'] = 'n' if onoff == 'off' and yd['dqszdsm'] == '11' else ''
@@ -136,7 +141,7 @@ def upload(session, skip_confirm=False, force=False):
     data = get_today_upload_data(session, force)
     if 'req' in data.values() or 'on' in data.values() or 'off' in data.values():
         pprint(data)
-        print('Some of the entries are not correctly filled. ' +
+        print('Some of the entries are not correctly filled.\n'
               'Please fill and save the form manually today and retry tomorrow.')
     else:
         if not skip_confirm:
